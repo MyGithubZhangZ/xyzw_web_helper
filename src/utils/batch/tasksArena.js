@@ -1,4 +1,4 @@
-/**
+﻿/**
  * 竞技场、补齐类任务
  * 包含: batcharenafight, batchTopUpFish, batchTopUpArena
  */
@@ -50,9 +50,18 @@ export function createTasksArena(deps) {
       tokenStatus.value[tokenId] = "running";
       const token = tokens.value.find((t) => t.id === tokenId);
       // 加载该Token的独立配置，如果未找到则回退到currentSettings(虽然可能不准确，但作为最后的兜底)
-      const tokenSettings = loadSettings
-        ? loadSettings(tokenId) || currentSettings
-        : currentSettings;
+      const tokenSettings = loadSettings ? (loadSettings(tokenId) || currentSettings) : currentSettings;
+
+      // 检查是否开启了竞技场
+      if (tokenSettings?.arenaEnable === false) {
+        addLog({
+          time: new Date().toLocaleTimeString(),
+          message: `${token.name} 竞技场功能已关闭，跳过执行`,
+          type: "warning",
+        });
+        tokenStatus.value[tokenId] = "completed";
+        return;
+      }
 
       try {
         addLog({
@@ -473,49 +482,49 @@ export function createTasksArena(deps) {
 
         // 自动领取鱼竿累计奖励
         try {
-          const roleRes = await tokenStore.sendMessageWithPromise(
-            tokenId,
-            "role_getroleinfo",
-            {},
-            5000,
-          );
-          const currentRole = roleRes?.role || roleRes?.data?.role;
-          if (currentRole) {
-            const points = currentRole.statistics?.["artifact:point"] || 0;
-            const exchangeCount = Math.floor(points / 20);
-
-            if (exchangeCount > 0) {
-              addLog({
-                time: new Date().toLocaleTimeString(),
-                message: `${token.name} 检测到鱼竿累计使用 ${points}，开始领取 ${exchangeCount} 次累计奖励`,
-                type: "info",
-              });
-
-              for (let k = 0; k < exchangeCount && !shouldStop.value; k++) {
-                try {
-                  await tokenStore.sendMessageWithPromise(
-                    tokenId,
-                    "artifact_exchange",
-                    {},
-                    3000,
-                  );
-                  await new Promise((r) => setTimeout(r, 500));
-                } catch (err) {
-                  addLog({
+           const roleRes = await tokenStore.sendMessageWithPromise(
+             tokenId,
+             "role_getroleinfo",
+             {},
+             5000,
+           );
+           const currentRole = roleRes?.role || roleRes?.data?.role;
+           if (currentRole) {
+              const points = currentRole.statistics?.["artifact:point"] || 0;
+              const exchangeCount = Math.floor(points / 20);
+              
+              if (exchangeCount > 0) {
+                 addLog({
                     time: new Date().toLocaleTimeString(),
-                    message: `${token.name} 领取累计奖励失败 (第${k + 1}次): ${err.message}`,
-                    type: "warning",
-                  });
-                  break;
-                }
+                    message: `${token.name} 检测到鱼竿累计使用 ${points}，开始领取 ${exchangeCount} 次累计奖励`,
+                    type: "info",
+                 });
+                 
+                 for (let k = 0; k < exchangeCount && !shouldStop.value; k++) {
+                    try {
+                       await tokenStore.sendMessageWithPromise(
+                         tokenId,
+                         "artifact_exchange",
+                         {},
+                         3000
+                       );
+                       await new Promise((r) => setTimeout(r, delayConfig.action||500)); 
+                    } catch (err) {
+                       addLog({
+                          time: new Date().toLocaleTimeString(),
+                          message: `${token.name} 领取累计奖励失败 (第${k+1}次): ${err.message}`,
+                          type: "warning",
+                       });
+                       break;
+                    }
+                 }
+                 addLog({
+                    time: new Date().toLocaleTimeString(),
+                    message: `${token.name} 累计奖励领取结束`,
+                    type: "success",
+                 });
               }
-              addLog({
-                time: new Date().toLocaleTimeString(),
-                message: `${token.name} 累计奖励领取结束`,
-                type: "success",
-              });
-            }
-          }
+           }
         } catch (e) {
           addLog({
             time: new Date().toLocaleTimeString(),
@@ -800,7 +809,7 @@ export function createTasksArena(deps) {
             }
 
             safetyCounter++;
-            await new Promise((r) => setTimeout(r, delayConfig.refresh));
+            await new Promise((r) => setTimeout(r, delayConfig.battle || 500));
           }
 
           const updatedResult = await tokenStore.sendMessageWithPromise(
