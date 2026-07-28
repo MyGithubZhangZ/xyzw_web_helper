@@ -1,4 +1,4 @@
-# Logs
+﻿# Logs
 logs
 *.log
 npm-debug.log*
@@ -135,3 +135,13 @@ dist
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
+.github
+*.bat
+*.exe
+node_modules/
+dist.zip
+*.bin
+bin/
+server/config.json
+
+src-tauri/

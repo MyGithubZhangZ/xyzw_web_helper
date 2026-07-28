@@ -27,6 +27,7 @@ export function createTasksLegacy(deps) {
     recipientInfo,
     securityPassword,
     giftQuantity,
+    giftAll,
     delayConfig,
   } = deps;
 
@@ -115,6 +116,7 @@ export function createTasksLegacy(deps) {
       quantity: Math.min(giftQuantity.value, 9999) || 0,
       serverName: recipientInfo.value?.serverName || "",
       name: recipientInfo.value?.name || "",
+      giftAll: giftAll.value, // 是否赠送全部
     };
 
     if (!isScheduledTask) {
@@ -123,7 +125,7 @@ export function createTasksLegacy(deps) {
         return;
       }
 
-      if (giftConfig.quantity <= 0 || giftConfig.quantity > 9999) {
+      if (!giftAll.value && (giftConfig.quantity <= 0 || giftConfig.quantity > 9999)) {
         message.error("赠送数量必须在1-9999之间");
         return;
       }
@@ -163,6 +165,22 @@ export function createTasksLegacy(deps) {
               roleInfo?.role?.items?.[giftConfig.itemId]?.quantity,
               9999,
             ) || 0;
+
+          // 如果是赠送全部模式，使用当前角色的最大数量
+          if (giftConfig.giftAll) {
+            if (legacyFragmentCount === 0) {
+              addLog({
+                time: new Date().toLocaleTimeString(),
+                message: `=== ${token.name} 功法残卷不足，当前拥有: 0 ===`,
+                type: "error",
+              });
+              tokenStatus.value[tokenId] = "failed";
+              totalFailed++;
+              break;
+            }
+            giftConfig.quantity = legacyFragmentCount;
+          }
+
           if (isScheduledTask) {
             if (legacyFragmentCount === 0) {
               addLog({
@@ -262,6 +280,7 @@ export function createTasksLegacy(deps) {
             },
             5000,
           );
+        
 
           if (!legacySendGiftResp) {
             throw new Error("赠送请求无响应");
@@ -298,7 +317,7 @@ export function createTasksLegacy(deps) {
           if (consecutiveErrors <= maxRetries && !shouldStop.value) {
             addLog({
               time: new Date().toLocaleTimeString(),
-              message: `=== ${token.name} 赠送功法残卷失败: ${errorMsg}，将在3秒后重试 ===`,
+              message: `=== ${token.name} 赠送功法残卷失败: ${errorMsg}，将在${delayConfig.long / 1000}秒后重试 ===`,
               type: "warning",
             });
             await new Promise((r) => setTimeout(r, delayConfig.long));
@@ -340,8 +359,95 @@ export function createTasksLegacy(deps) {
     );
   };
 
+  /**
+   * 批量开启残卷挂机
+   */
+  const batchLegacyBeginHangUp = async () => {
+    if (selectedTokens.value.length === 0) return;
+    isRunning.value = true;
+    shouldStop.value = false;
+
+    selectedTokens.value.forEach((id) => {
+      tokenStatus.value[id] = "waiting";
+    });
+
+    const taskPromises = selectedTokens.value.map(async (tokenId) => {
+      if (shouldStop.value) return;
+      tokenStatus.value[tokenId] = "running";
+
+      const token = tokens.value.find((t) => t.id === tokenId);
+      try {
+        addLog({
+          time: new Date().toLocaleTimeString(),
+          message: `=== 开始开启残卷挂机: ${token.name} ===`,
+          type: "info",
+        });
+        await ensureConnection(tokenId);
+
+        addLog({
+          time: new Date().toLocaleTimeString(),
+          message: `${token.name} 发送开启残卷挂机请求...`,
+          type: "info",
+        });
+
+        //获取残卷信息
+        const legacyInfo = await tokenStore.sendMessageWithPromise(
+          tokenId,
+          "legacy_getinfo",
+          {},
+          5000,
+        );
+
+        const result = await tokenStore.sendMessageWithPromise(
+          tokenId,
+          "legacy_beginhangup",
+          {},
+          5000,
+        );
+
+        if (result.error) {
+          addLog({
+            time: new Date().toLocaleTimeString(),
+            message: `${token.name} 开启残卷挂机失败: ${result.error}`,
+            type: "error",
+          });
+          tokenStatus.value[tokenId] = "failed";
+        } else {
+          addLog({
+            time: new Date().toLocaleTimeString(),
+            message: `${token.name} 开启残卷挂机成功`,
+            type: "success",
+          });
+          tokenStatus.value[tokenId] = "completed";
+        }
+      } catch (error) {
+        addLog({
+          time: new Date().toLocaleTimeString(),
+          message: `${token.name} 开启残卷挂机过程出错: ${error.message}`,
+          type: "error",
+        });
+        tokenStatus.value[tokenId] = "failed";
+      } finally {
+        tokenStore.closeWebSocketConnection(tokenId);
+        releaseConnectionSlot();
+        addLog({
+          time: new Date().toLocaleTimeString(),
+          message: `${token.name} 连接已关闭  (队列: ${connectionQueue.active}/${batchSettings.maxActive})`,
+          type: "info",
+        });
+      }
+    });
+
+    await Promise.all(taskPromises);
+
+    currentRunningTokenId.value = null;
+    isRunning.value = false;
+    shouldStop.value = false;
+  };
+
   return {
     batchLegacyClaim,
     batchLegacyGiftSendEnhanced,
+    batchLegacyBeginHangUp,
   };
 }

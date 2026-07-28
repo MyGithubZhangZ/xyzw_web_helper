@@ -1,4 +1,4 @@
-/**
+﻿/**
  * XYZW WebSocket 客户端
  * 基于 readable-xyzw-ws.js 重构，适配本项目架构
  */
@@ -366,9 +366,23 @@ export function registerDefaultCommands(reg) {
     // 扭蛋相关
     .register("gacha_drawreward", { num: 1, isGroup: false })
 
+    // 预约直播相关
+    .register("pkroom_appoint")
+    
+    // 车辆相关
+    .register("car_getrolecar")
+    .register("car_refresh", { carId: 0 })
+    .register("car_claim", { carId: 0 })
+    .register("car_send", { carId: 0, helperId: 0, text: "" })
+    .register("car_getmemberhelpingcnt")
+    .register("car_getmemberrank")
+    .register("car_research")
+    .register("car_claimpartconsumereward")
+
     // 功法
     .register("legacy_getinfo")
     .register("legacy_claimhangup")
+    .register("legacy_beginhangup")
     // 功法残卷赠送
     .register("legacy_gift_getlist")
     .register("legacy_gift_send", { recipientId: 0, itemId: 0, quantity: 0 })

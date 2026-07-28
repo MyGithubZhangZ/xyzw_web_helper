@@ -52,7 +52,18 @@ export function createTasksArena(deps) {
       const token = tokens.value.find((t) => t.id === tokenId);
       // 加载该Token的独立配置，如果未找到则回退到currentSettings(虽然可能不准确，但作为最后的兜底)
       const tokenSettings = loadSettings ? (loadSettings(tokenId) || currentSettings) : currentSettings;
-      
+
+      // 检查是否开启了竞技场
+      if (tokenSettings?.arenaEnable === false) {
+        addLog({
+          time: new Date().toLocaleTimeString(),
+          message: `${token.name} 竞技场功能已关闭，跳过执行`,
+          type: "warning",
+        });
+        tokenStatus.value[tokenId] = "completed";
+        return;
+      }
+
       try {
         addLog({
           time: new Date().toLocaleTimeString(),
@@ -493,7 +504,7 @@ export function createTasksArena(deps) {
                          {},
                          3000
                        );
-                       await new Promise((r) => setTimeout(r, 500)); 
+                       await new Promise((r) => setTimeout(r, delayConfig.action||500)); 
                     } catch (err) {
                        addLog({
                           time: new Date().toLocaleTimeString(),
@@ -793,7 +804,7 @@ export function createTasksArena(deps) {
             }
 
             safetyCounter++;
-            await new Promise((r) => setTimeout(r, delayConfig.refresh));
+            await new Promise((r) => setTimeout(r, delayConfig.battle || 500));
           }
 
           const updatedResult = await tokenStore.sendMessageWithPromise(
