@@ -1,4 +1,4 @@
-import {
+﻿import {
   getClaimablePointRewards,
   getDailyTaskStates,
   loadDailyTaskConfig,
@@ -109,10 +109,10 @@ export class DailyTaskRunner {
       if (description) {
         const token = this.tokenStore.gameTokens.find((t) => t.id === tokenId);
         const tokenName = token?.name || tokenId;
-        this.log(
-          `[${tokenName}] ${description} - 失败: ${error.message}`,
-          "error",
-        );
+        // 永久卡礼包未购买时不显示错误，使用普通日志
+        const isPermanentCardError = description === "领取永久卡礼包" && error.message?.includes("1400010");
+        const logType = isPermanentCardError ? "info" : "error";
+        this.log(`[${tokenName}] ${description} - 失败: ${error.message}`, logType);
       }
       throw error;
     }
@@ -664,6 +664,8 @@ export class DailyTaskRunner {
         ),
     });
 
+    // 免费扭蛋只在周二、四、六执行
+    const isFreeGachaDay = [2, 4, 6].includes(new Date().getDay());
     if (
       settings.freeGachaEnable !== false &&
       isTodayAvailable(statistics["gacha:free"])
@@ -731,18 +733,58 @@ export class DailyTaskRunner {
     }
 
     // 6. 黑市
+    /*     if (!isTaskCompleted(12) && settings.blackMarketPurchase) {
+          taskList.push({
+            name: "黑市购买1次物品",
+            execute: () =>
+              this.executeGameCommand(
+                tokenId,
+                "store_purchase",
+                { goodsId: 1 },
+                "黑市购买1次物品",
+              ),
+          });
+        } */
+// 6. 黑市增强功能
     if (!isTaskCompleted(12) && settings.blackMarketPurchase) {
-      taskList.push({
-        name: "黑市购买1次物品",
-        condition: 12,
-        execute: () =>
-          this.executeGameCommand(
-            tokenId,
-            "store_purchase",
-            { goodsId: 1 },
-            "黑市购买1次物品",
-          ),
-      });
+
+      // 先获取黑市购买清单
+      const purchaseListResp = await this.executeGameCommand(
+        tokenId,
+        "store_getpurchase",
+        {},
+        "获取黑市购买清单",
+      );
+
+      // 根据返回的list判断是否开启了购买清单
+      const purchaseList = purchaseListResp?.purchaseItemList || [];
+      const hasPurchaseList = purchaseList.length > 0;
+      if (hasPurchaseList) {
+        taskList.push({
+          name: "黑市购买1次物品",
+          execute: () =>
+            this.executeGameCommand(
+              tokenId,
+              "store_purchase",
+              { goodsId: 1 },
+              "黑市购买1次物品",
+            ),
+        });
+      }
+      else {
+        taskList.push({
+          name: "黑市购买1次物品",
+          execute: () =>
+            this.executeGameCommand(
+              tokenId,
+              "store_buy",
+              { id: 1 },
+              "黑市购买1次物品",
+            ),
+        });
+
+      }
+
     }
 
     // 咸王梦境

@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <!-- 手动输入表单 -->
   <NForm
     :model="importForm"
@@ -141,23 +141,20 @@ const initName = (fileName: string) => {
   fileName = fileName.trim();
   const binRes = fileName.match(/^bin-(.*?)服-([0-2])-(\d{6,12})-(.*)\.bin$/);
   console.log(binRes);
-  if (binRes) {
-    importForm.name = `${binRes[1]}_${binRes[2]}_${binRes[4]}`;
-    return {
       server: binRes[1],
       roleIndex: binRes[2],
       roleId: binRes[3],
       roleName: binRes[4],
+      // StableId 生成：bin-服务器-索引-角色ID
+      stableId: `bin-${binRes[1]}-${binRes[2]}-${binRes[3]}`,
     };
-  }
-  return {
     server: "",
     roleIndex: "",
     roleId: "",
     roleName: importForm.name || "",
+    stableId: fileName, // 回退：使用文件名本身
   };
 };
-
 const uploadBin = (binFile: File) => {
   tQueue.add(async () => {
     console.log("上传文件数据:", binFile);
@@ -165,11 +162,11 @@ const uploadBin = (binFile: File) => {
     const reader = new FileReader();
     reader.onload = async (e) => {
       const userToken = e.target?.result as ArrayBuffer;
+      // 根据管理模式选择不同的ID生成策略
+      // StableId模式：使用文件名生成的stableId，相同文件名视为同一角色
+      // Hash模式：使用文件内容Hash，内容相同视为同一角色
       // console.log('转换Token:', userToken);
       const tokenId = getTokenId(userToken);
-      const roleToken = await transformToken(userToken);
-      const roleName = roleMeta.roleName || binFile.name.split(".")?.[0] || "";
-      // 刷新indexDB数据库token数据
       const saved = await storeArrayBuffer(tokenId, userToken);
       if (!saved) {
         message.error("保存BIN数据到IndexedDB失败");
@@ -178,7 +175,7 @@ const uploadBin = (binFile: File) => {
 
       // 上传列表中发现已存在的重复名称，提示消息
       if (roleList.value.some((role) => role.id === tokenId)) {
-        message.error("上传列表中已存在同名角色! ");
+      
         return;
       }
       // 检查待上传的角色是否已在tokenStore中存在
@@ -210,9 +207,9 @@ const handleImport = async () => {
     return;
   }
   roleList.value.forEach((role) => {
-    // tokenStore.gameTokens中发现已存在的重复名称，则移出token后重新添加
-    const gameToken = tokenStore.gameTokens.find((t) => t.id === role.id);
-    if (gameToken) {
+    // StableId模式下：记录旧token的分组关联，用于后续恢复
+    let oldTokenGroups: string[] = [];
+    if (binManageMode.value === 'stableId') {
       console.log("移除同名token:", gameToken);
       // tokenStore.removeToken(gameToken.id);
       tokenStore.updateToken(gameToken.id, {
@@ -223,9 +220,9 @@ const handleImport = async () => {
         ...role,
       });
     }
-  });
-  console.log("当前Token列表:", tokenStore.gameTokens);
-  message.success("Token添加成功");
+
+    // StableId模式下：重新关联到原分组
+    if (binManageMode.value === 'stableId' && oldTokenGroups.length > 0) {
   roleList.value = [];
   $emit("ok");
 };
@@ -259,9 +256,9 @@ const handleImport = async () => {
   padding: 40px 20px;
   font-size: 12px;
 }
-</style>
 
-<route lang="json">
+/* BIN文件管理方式样式 */
+.mode-selection {
 {
   "name": "/TokenImport/singlebin",
   "path": "/TokenImport/singlebin"
