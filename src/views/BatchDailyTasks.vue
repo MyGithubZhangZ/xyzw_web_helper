@@ -106,194 +106,8 @@
           </div>
         </div>
 
-        <!-- Token Selection -->
-        <n-card title="账号列表" class="token-list-card">
-          <div style="margin-bottom: 16px">
-            <!-- 分组管理和选择 -->
-            <n-space vertical style="width: 100%">
-              <!-- 分组选择部分 -->
-              <div
-                v-if="tokenGroups.length > 0"
-                class="group-selection-section"
-              >
-                <div
-                  style="
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                    margin-bottom: 12px;
-                  "
-                >
-                  <label style="font-weight: 500; color: #333">分组选择</label>
-                  <n-button
-                    size="small"
-                    type="error"
-                    text
-                    @click="clearAllGroupSelection"
-                  >
-                    一键清除所有分组选择
-                  </n-button>
-                </div>
-                <div style="display: flex; gap: 8px; flex-wrap: wrap">
-                  <div
-                    v-for="group in tokenGroups"
-                    :key="group.id"
-                    @click="toggleGroupSelection(group.id)"
-                    :style="{
-                      padding: '8px 12px',
-                      borderRadius: '6px',
-                      cursor: 'pointer',
-                      backgroundColor: isGroupSelected(group.id)
-                        ? group.color
-                        : 'transparent',
-                      border: `2px solid ${group.color}`,
-                      color: isGroupSelected(group.id) ? 'white' : group.color,
-                      fontWeight: isGroupSelected(group.id) ? '600' : '400',
-                      transition: 'all 0.3s ease',
-                      userSelect: 'none',
-                    }"
-                  >
-                    {{ group.name }} ({{
-                      getValidGroupTokenIds(group.id).length
-                    }})
-                  </div>
-                </div>
-              </div>
-
-              <!-- 分组管理按钮 -->
-              <div
-                style="
-                  display: flex;
-                  justify-content: space-between;
-                  align-items: center;
-                "
-              >
-                <n-button
-                  type="info"
-                  size="small"
-                  @click="showGroupManageModal = true"
-                >
-                  管理分组
-                </n-button>
-                <span
-                  v-if="selectedGroups.length > 0"
-                  style="font-size: 12px; color: #86909c"
-                >
-                  已选择 {{ selectedGroups.length }} 个分组，包含
-                  {{ selectedTokens.length }} 个账号
-                </span>
-              </div>
-            </n-space>
-          </div>
-
-          <!-- 排序按钮组 -->
-          <div class="sort-buttons" style="margin-bottom: 12px">
-            <n-space align="center">
-              <n-button-group size="small">
-                <n-button
-                  @click="toggleSort('name')"
-                  :type="sortConfig.field === 'name' ? 'primary' : 'default'"
-                >
-                  名称 {{ getSortIcon("name") }}
-                </n-button>
-                <n-button
-                  @click="toggleSort('server')"
-                  :type="sortConfig.field === 'server' ? 'primary' : 'default'"
-                >
-                  服务器 {{ getSortIcon("server") }}
-                </n-button>
-                <n-button
-                  @click="toggleSort('createdAt')"
-                  :type="
-                    sortConfig.field === 'createdAt' ? 'primary' : 'default'
-                  "
-                >
-                  创建时间 {{ getSortIcon("createdAt") }}
-                </n-button>
-                <n-button
-                  @click="toggleSort('lastUsed')"
-                  :type="
-                    sortConfig.field === 'lastUsed' ? 'primary' : 'default'
-                  "
-                >
-                  最后使用 {{ getSortIcon("lastUsed") }}
-                </n-button>
-              </n-button-group>
-            </n-space>
-          </div>
-
-          <n-space vertical>
-            <n-checkbox
-              :checked="isAllSelected"
-              :indeterminate="isIndeterminate"
-              @update:checked="handleSelectAll"
-            >
-              全选
-            </n-checkbox>
-            <n-checkbox-group v-model:value="selectedTokens">
-              <n-grid
-                :x-gap="12"
-                :y-gap="8"
-                :cols="batchSettings.tokenListColumns"
-              >
-                <n-grid-item v-for="token in sortedTokens" :key="token.id">
-                  <div class="token-row">
-                    <n-checkbox
-                      :value="token.id"
-                      :label="token.name"
-                      style="flex: 1"
-                    >
-                      <div class="token-item">
-                        <span>{{ token.name }}</span>
-                        <n-tag
-                          size="small"
-                          :type="getStatusType(token.id)"
-                          style="margin-left: 8px"
-                        >
-                          {{ getStatusText(token.id) }}
-                        </n-tag>
-                        <!-- 显示token所属的分组 -->
-                        <div
-                          v-if="tokenStore.getTokenGroups(token.id).length > 0"
-                          style="
-                            margin-left: 8px;
-                            display: inline-flex;
-                            gap: 4px;
-                            flex-wrap: wrap;
-                          "
-                        >
-                          <n-tag
-                            v-for="group in tokenStore.getTokenGroups(token.id)"
-                            :key="group.id"
-                            size="small"
-                            :color="{ color: group.color, textColor: 'white' }"
-                            style="font-size: 11px"
-                          >
-                            {{ group.name }}
-                          </n-tag>
-                        </div>
-                      </div>
-                    </n-checkbox>
-                    <n-button
-                      size="tiny"
-                      circle
-                      @click.stop="openSettings(token)"
-                    >
-                      <template #icon>
-                        <n-icon>
-                          <Settings />
-                        </n-icon>
-                      </template>
-                    </n-button>
-                  </div>
-                </n-grid-item>
-              </n-grid>
-            </n-checkbox-group>
-          </n-space>
-        </n-card>
-
-        <!-- Batch Functions -->
-        <n-card title="批量功能列表" style="margin-top: 16px">
+         <!-- Batch Functions -->
+        <n-card title="批量功能列表" >
           <n-tabs type="line" animated>
             <n-tab-pane name="daily" tab="日常">
               <n-space>
@@ -366,8 +180,7 @@
                   @click="batchClaimCars"
                   :disabled="
                     isRunning ||
-                    selectedTokens.length === 0 ||
-                    !isCarActivityOpen
+                    selectedTokens.length === 0
                   "
                 >
                   一键收车
@@ -612,10 +425,32 @@
                 >
                   一键购买俱乐部5皮肤币
                 </n-button>
+                <n-button
+                  size="small"
+                  @click="freeGacha"
+                  :disabled="isRunning || selectedTokens.length === 0 || !isFreeGachaDay"
+                  :title="isFreeGachaDay ? '' : '只在周二、四、六可用'"
+                >
+                  一键免费扭蛋
+                </n-button>
+                <n-button
+                  size="small"
+                  @click="bookLiveStream"
+                  :disabled="isRunning || selectedTokens.length === 0"
+                >
+                  预约直播
+                </n-button>
               </n-space>
             </n-tab-pane>
             <n-tab-pane name="legacy" tab="功法">
               <n-space>
+                <n-button
+                  size="small"
+                  @click="batchLegacyBeginHangUp"
+                  :disabled="isRunning || selectedTokens.length === 0"
+                >
+                  开启残卷挂机
+                </n-button>
                 <n-button
                   size="small"
                   @click="batchLegacyClaim"
@@ -668,6 +503,194 @@
             </n-tab-pane>
           </n-tabs>
         </n-card>
+
+        <!-- Token Selection -->
+        <n-card title="账号列表" class="token-list-card" style="margin-top: 16px">
+          <div style="margin-bottom: 16px">
+            <!-- 分组管理和选择 -->
+            <n-space vertical style="width: 100%">
+              <!-- 分组选择部分 -->
+              <div
+                v-if="tokenGroups.length > 0"
+                class="group-selection-section"
+              >
+                <div
+                  style="
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    margin-bottom: 12px;
+                  "
+                >
+                  <label style="font-weight: 500; color: #333">分组选择</label>
+                  <n-button
+                    size="small"
+                    type="error"
+                    text
+                    @click="clearAllGroupSelection"
+                  >
+                    一键清除所有分组选择
+                  </n-button>
+                </div>
+                <div style="display: flex; gap: 8px; flex-wrap: wrap">
+                  <div
+                    v-for="group in tokenGroups"
+                    :key="group.id"
+                    @click="toggleGroupSelection(group.id)"
+                    :style="{
+                      padding: '8px 12px',
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      backgroundColor: isGroupSelected(group.id)
+                        ? group.color
+                        : 'transparent',
+                      border: `2px solid ${group.color}`,
+                      color: isGroupSelected(group.id) ? 'white' : group.color,
+                      fontWeight: isGroupSelected(group.id) ? '600' : '400',
+                      transition: 'all 0.3s ease',
+                      userSelect: 'none',
+                    }"
+                  >
+                    {{ group.name }} ({{
+                      getValidGroupTokenIds(group.id).length
+                    }})
+                  </div>
+                </div>
+              </div>
+
+              <!-- 分组管理按钮 -->
+              <div
+                style="
+                  display: flex;
+                  justify-content: space-between;
+                  align-items: center;
+                "
+              >
+                <n-button
+                  type="info"
+                  size="small"
+                  @click="showGroupManageModal = true"
+                >
+                  管理分组
+                </n-button>
+                <span
+                  v-if="selectedGroups.length > 0"
+                  style="font-size: 12px; color: #86909c"
+                >
+                  已选择 {{ selectedGroups.length }} 个分组，包含
+                  {{ selectedTokens.length }} 个账号
+                </span>
+              </div>
+            </n-space>
+          </div>
+
+          <!-- 排序按钮组 -->
+          <div class="sort-buttons" style="margin-bottom: 12px">
+            <n-space align="center">
+              <n-button-group size="small">
+                <n-button
+                  @click="toggleSort('name')"
+                  :type="sortConfig.field === 'name' ? 'primary' : 'default'"
+                >
+                  名称 {{ getSortIcon("name") }}
+                </n-button>
+                <n-button
+                  @click="toggleSort('server')"
+                  :type="sortConfig.field === 'server' ? 'primary' : 'default'"
+                >
+                  服务器 {{ getSortIcon("server") }}
+                </n-button>
+                <n-button
+                  @click="toggleSort('createdAt')"
+                  :type="
+                    sortConfig.field === 'createdAt' ? 'primary' : 'default'
+                  "
+                >
+                  创建时间 {{ getSortIcon("createdAt") }}
+                </n-button>
+                <n-button
+                  @click="toggleSort('lastUsed')"
+                  :type="
+                    sortConfig.field === 'lastUsed' ? 'primary' : 'default'
+                  "
+                >
+                  最后使用 {{ getSortIcon("lastUsed") }}
+                </n-button>
+              </n-button-group>
+            </n-space>
+          </div>
+
+          <n-space vertical>
+            <n-checkbox
+              :checked="isAllSelected"
+              :indeterminate="isIndeterminate"
+              @update:checked="handleSelectAll"
+            >
+              全选
+            </n-checkbox>
+            <n-checkbox-group v-model:value="selectedTokens">
+              <n-grid
+                :x-gap="12"
+                :y-gap="8"
+                :cols="batchSettings.tokenListColumns"
+              >
+                <n-grid-item v-for="token in sortedTokens" :key="token.id">
+                  <div class="token-row">
+                    <n-checkbox
+                      :value="token.id"
+                      :label="token.name"
+                      style="flex: 1"
+                    >
+                      <div class="token-item">
+                        <span>{{ token.name }}</span>
+                        <n-tag
+                          size="small"
+                          :type="getStatusType(token.id)"
+                          style="margin-left: 8px"
+                        >
+                          {{ getStatusText(token.id) }}
+                        </n-tag>
+                        <!-- 显示token所属的分组 -->
+                        <div
+                          v-if="tokenStore.getTokenGroups(token.id).length > 0"
+                          style="
+                            margin-left: 8px;
+                            display: inline-flex;
+                            gap: 4px;
+                            flex-wrap: wrap;
+                          "
+                        >
+                          <n-tag
+                            v-for="group in tokenStore.getTokenGroups(token.id)"
+                            :key="group.id"
+                            size="small"
+                            :color="{ color: group.color, textColor: 'white' }"
+                            style="font-size: 11px"
+                          >
+                            {{ group.name }}
+                          </n-tag>
+                        </div>
+                      </div>
+                    </n-checkbox>
+                    <n-button
+                      size="tiny"
+                      circle
+                      @click.stop="openSettings(token)"
+                    >
+                      <template #icon>
+                        <n-icon>
+                          <Settings />
+                        </n-icon>
+                      </template>
+                    </n-button>
+                  </div>
+                </n-grid-item>
+              </n-grid>
+            </n-checkbox-group>
+          </n-space>
+        </n-card>
+
+       
       </div>
 
       <!-- Right Column - Execution Log -->
@@ -793,6 +816,10 @@
               <span class="switch-label">付费招募</span
               ><n-switch v-model:value="currentSettings.payRecruit" />
             </div>
+            <div class="switch-row">
+              <span class="switch-label">智能发车</span
+              ><n-switch v-model:value="currentSettings.smartSendCarEnable" />
+            </div>
           </div>
         </div>
         <div class="modal-actions" style="margin-top: 20px; text-align: right">
@@ -878,6 +905,10 @@
             <div class="switch-row">
               <span class="switch-label">付费招募</span
               ><n-switch v-model:value="currentTemplate.payRecruit" />
+            </div>
+            <div class="switch-row">
+              <span class="switch-label">智能发车</span
+              ><n-switch v-model:value="currentTemplate.smartSendCarEnable" />
             </div>
           </div>
         </div>
@@ -1427,13 +1458,18 @@
             </div>
           </div>
 
-          <!-- 赠送数量 -->
+          <!-- 赠送全部 -->
           <div class="setting-item">
+            <n-checkbox v-model:checked="giftAll">赠送全部</n-checkbox>
+          </div>
+
+          <!-- 赠送数量 -->
+          <div class="setting-item" v-if="!giftAll">
             <label class="setting-label">赠送数量</label>
             <n-input-number
               v-model:value="giftQuantity"
               :min="1"
-              :max="1000"
+              :max="9999"
               :step="1"
               placeholder="请输入赠送数量"
             />
@@ -2263,11 +2299,11 @@
                   align-items: center;
                 "
               >
-                <label class="setting-label">操作延迟</label>
+                <label class="setting-label" title="操作延迟（开箱、钓鱼、招募、怪异塔等）">操作延迟</label>
                 <n-input-number
                   v-model:value="batchSettings.actionDelay"
                   :min="100"
-                  :max="2000"
+                  :max="3000"
                   :step="100"
                   size="small"
                   style="width: 100px"
@@ -2281,11 +2317,11 @@
                   align-items: center;
                 "
               >
-                <label class="setting-label">战斗延迟</label>
+                <label class="setting-label" title="战斗延迟（宝库、竞技场等）">战斗延迟</label>
                 <n-input-number
                   v-model:value="batchSettings.battleDelay"
                   :min="100"
-                  :max="2000"
+                  :max="3000"
                   :step="100"
                   size="small"
                   style="width: 100px"
@@ -2299,7 +2335,7 @@
                   align-items: center;
                 "
               >
-                <label class="setting-label">刷新延迟</label>
+                <label class="setting-label" title="刷新延迟（发车刷新等）">刷新延迟</label>
                 <n-input-number
                   v-model:value="batchSettings.refreshDelay"
                   :min="500"
@@ -2317,7 +2353,7 @@
                   align-items: center;
                 "
               >
-                <label class="setting-label">长延迟</label>
+                <label class="setting-label" title="长延迟（功法赠送等）">长延迟</label>
                 <n-input-number
                   v-model:value="batchSettings.longDelay"
                   :min="1000"
@@ -2937,6 +2973,13 @@ const towerEnergy = computed(() => {
   return weirdTowerData.value?.energy || 0;
 });
 
+// 判断是否是可以免费扭蛋的日子（周二、四、六）
+const isFreeGachaDay = computed(() => {
+  const day = new Date().getDay();
+  // 2: 周二, 4: 周四, 6: 周六
+  return day === 2 || day === 4 || day === 6;
+});
+
 // 排序后的游戏角色Token列表
 const sortedTokens = computed(() => {
   return [...tokenStore.gameTokens].sort((tokenA, tokenB) => {
@@ -3306,6 +3349,7 @@ const currentSettings = reactive({
   claimHangUp: true,
   claimEmail: true,
   blackMarketPurchase: true,
+  smartSendCarEnable: true,
 });
 
 // Task Template State
@@ -3330,6 +3374,7 @@ const currentTemplate = reactive({
   claimHangUp: true,
   claimEmail: true,
   blackMarketPurchase: true,
+  smartSendCarEnable: true,
 });
 
 // Account Template References
@@ -3402,7 +3447,7 @@ const batchSettings = reactive({
   // 延迟配置（毫秒）
   commandDelay: 500, // 命令间延迟
   taskDelay: 500, // 任务间延迟
-  actionDelay: 300, // 一般操作延迟（开箱、钓鱼、招募等）
+  actionDelay: 300, // 一般操作延迟（开箱、钓鱼、招募,爬塔等）
   battleDelay: 500, // 战斗延迟（宝库、竞技场等）
   refreshDelay: 1000, // 刷新延迟（发车刷新等）
   longDelay: 3000, // 长延迟（功法赠送等）
@@ -3467,6 +3512,7 @@ const recipientIdError = ref("");
 const recipientInfo = ref(null);
 const isQueryingRecipient = ref(false);
 const giftQuantity = ref(10);
+const giftAll = ref(true); // 赠送全部，默认选中
 const securityPassword = ref(""); // 安全密码
 // 头像加载状态
 const isAvatarLoading = ref(false);
@@ -4556,6 +4602,9 @@ const executeScheduledTask = async (task) => {
         return;
       }
 
+
+
+      // 竞技场任务：检查开放时间
       if (
         ["batchTopUpArena", "batcharenafight"].includes(taskName) &&
         !isarenaActivityOpen.value
@@ -4563,6 +4612,16 @@ const executeScheduledTask = async (task) => {
         addLog({
           time: new Date().toLocaleTimeString(),
           message: `跳过任务: ${availableTasks.find((t) => t.value === taskName)?.label || taskName} (不在竞技场开放时间)`,
+          type: "warning",
+        });
+        return;
+      }
+
+      // 自动任务一键答题只在周一执行（按钮不受限制）
+      if (taskName === "batchStudy" && new Date().getDay() !== 1) {
+        addLog({
+          time: new Date().toLocaleTimeString(),
+          message: `跳过任务: ${availableTasks.find((t) => t.value === taskName)?.label || taskName} (只在周一执行)`,
           type: "warning",
         });
         return;
@@ -4968,6 +5027,7 @@ const loadSettings = (tokenId) => {
       claimHangUp: true,
       claimEmail: true,
       blackMarketPurchase: true,
+      smartSendCarEnable: true,
     };
     return raw ? { ...defaultSettings, ...JSON.parse(raw) } : defaultSettings;
   } catch (error) {
@@ -5012,6 +5072,7 @@ const openTaskTemplateModal = () => {
     claimHangUp: true,
     claimEmail: true,
     blackMarketPurchase: true,
+    smartSendCarEnable: true,
   });
   currentTemplateName.value = "";
   showTaskTemplateModal.value = true;
@@ -5160,6 +5221,7 @@ const resetTemplateForm = () => {
     claimHangUp: true,
     claimEmail: true,
     blackMarketPurchase: true,
+    smartSendCarEnable: true,
   });
 };
 
@@ -5719,6 +5781,7 @@ const createTaskDeps = () => ({
   recipientInfo,
   securityPassword,
   giftQuantity,
+  giftAll,
   // 竞技场相关辅助函数
   pickArenaTargetId,
   getTodayStartSec,
@@ -5781,10 +5844,12 @@ const {
   legionStoreBuySkinCoins,
   store_purchase,
   collection_claimfreereward,
+  freeGacha,
+  bookLiveStream,
 } = tasksStore;
 
 const tasksLegacy = createTasksLegacy(createTaskDeps());
-const { batchLegacyClaim, batchLegacyGiftSendEnhanced } = tasksLegacy;
+const { batchLegacyClaim, batchLegacyGiftSendEnhanced, batchLegacyBeginHangUp } = tasksLegacy;
 
 const tasksFootball = createTasksFootball(createTaskDeps());
 const { batchFootballBet } = tasksFootball;

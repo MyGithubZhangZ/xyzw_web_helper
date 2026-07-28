@@ -29,6 +29,7 @@ export function createTasksTower(deps) {
     currentSettings,
     loadSettings,
     weirdTowerMaxClimb,
+    delayConfig,
   } = deps;
 
   /**
@@ -401,7 +402,7 @@ export function createTasksTower(deps) {
               type: "info",
             });
 
-            await new Promise((r) => setTimeout(r, 500));
+            await new Promise((resolve) => setTimeout(resolve, delayConfig?.actionDelay || 500));
 
             const evotowerinfo2 = await tokenStore.sendMessageWithPromise(
               tokenId,
@@ -483,6 +484,44 @@ export function createTasksTower(deps) {
               type: "warning",
             });
 
+            if (err.message && err.message.includes("400340")) {
+              addLog({
+                time: new Date().toLocaleTimeString(),
+                message: `${token.name} 操作过快 (服务器错误)，等待五分钟后继续...`,
+                type: "warning",
+              });
+
+              // 关闭连接释放服务器资源，但保持槽位占用（其他token继续等待）
+              tokenStore.closeWebSocketConnection(tokenId);
+
+              await new Promise((r) => setTimeout(r, 300000));
+
+              // 直接重新连接（槽位未释放，不需要重新获取）
+              const latestToken = tokens.value.find((t) => t.id === tokenId);
+              tokenStore.createWebSocketConnection(
+                tokenId,
+                latestToken.token,
+                latestToken.wsUrl,
+              );
+              // 等待连接成功
+              let connected = false;
+              const startTime = Date.now();
+              while (!connected && Date.now() - startTime < 10000) {
+                await new Promise((r) => setTimeout(r, 500));
+                connected = tokenStore.getWebSocketStatus(tokenId) === "connected";
+              }
+
+              if (!connected) {
+                throw new Error("重新连接失败");
+              }
+
+              addLog({
+                time: new Date().toLocaleTimeString(),
+                message: `${token.name} 重新连接成功，继续爬塔...`,
+                type: "warning",
+              });
+            }
+
             if (consecutiveFailures >= 3) {
               addLog({
                 time: new Date().toLocaleTimeString(),
@@ -529,14 +568,31 @@ export function createTasksTower(deps) {
           message: `${token.name} 爬怪异塔失败: ${error.message}`,
           type: "error",
         });
+
+        // 保存错误标志到 token，供 finally 中判断是否延迟
+        token._hasSpeedError = error.message && error.message.includes("400340");
+
       } finally {
         tokenStore.closeWebSocketConnection(tokenId);
-        releaseConnectionSlot();
         addLog({
           time: new Date().toLocaleTimeString(),
           message: `${token.name} 连接已关闭  (队列: ${connectionQueue.active}/${batchSettings.maxActive})`,
           type: "info",
         });
+
+        // 怪异塔爬塔过快时候，暂停五分钟
+        if (token._hasSpeedError) {
+          addLog({
+            time: new Date().toLocaleTimeString(),
+            message: `${token.name} 操作过快 (服务器错误)，等待五分钟后继续...`,
+            type: "warning",
+          });
+          await new Promise((r) => setTimeout(r, 300000));
+          delete token._hasSpeedError; // 清理标志
+        }
+
+        // 释放连接槽位
+        releaseConnectionSlot();
       }
     });
 
@@ -659,6 +715,7 @@ export function createTasksTower(deps) {
 
         await ensureConnection(tokenId);
 
+        var actId=2606261;//先临时写死
         // 获取活动信息
         let res = await tokenStore.sendMessageWithPromise(
           tokenId,
@@ -680,7 +737,7 @@ export function createTasksTower(deps) {
           return;
         }
 
-        const actId = String(towerData.actId);
+        //const actId = String(towerData.actId);
         if (actId.length >= 6) {
            const year = "20" + actId.substring(0, 2);
            const month = actId.substring(2, 4);

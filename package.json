@@ -11,7 +11,10 @@
     "build": "vite build",
     "preview": "vite preview",
     "lint": "eslint src --ext .vue,.js,.ts --fix",
-    "format": "prettier --write \"src/**/*.{js,vue,ts,css,scss}\""
+    "format": "prettier --write \"src/**/*.{js,vue,ts,css,scss}\"",
+    "tauri": "tauri",
+    "tauri:dev": "tauri dev",
+    "tauri:build": "tauri build"
   },
   "dependencies": {
     "@arco-design/web-vue": "^2.57.0",

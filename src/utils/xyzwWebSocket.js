@@ -185,6 +185,7 @@ export function registerDefaultCommands(reg) {
     .register("store_buy", { goodsId: 1 })
     .register("store_purchase", { goodsId: 1 })
     .register("store_refresh", { storeId: 1 })
+    .register("store_getpurchase")
 
     // 军团
     .register("legion_getinfo")
@@ -326,6 +327,9 @@ export function registerDefaultCommands(reg) {
 
     // 扭蛋相关
     .register("gacha_drawreward", { num: 1, isGroup: false })
+
+    // 预约直播相关
+    .register("pkroom_appoint")
     
     // 车辆相关
     .register("car_getrolecar")
@@ -340,6 +344,7 @@ export function registerDefaultCommands(reg) {
     // 功法
     .register("legacy_getinfo")
     .register("legacy_claimhangup")
+    .register("legacy_beginhangup")
     // 功法残卷赠送
     .register("legacy_gift_getlist")
     .register("legacy_gift_send", { recipientId: 0, itemId: 0, quantity: 0 })
@@ -1072,6 +1077,7 @@ export class XyzwWebSocketClient {
       presetteam_getinforesp: "presetteam_getinfo",
       mail_claimallattachmentresp: "mail_claimallattachment",
       store_buyresp: "store_purchase",
+      store_purchaseresp: "store_getpurchase",
       system_getdatabundleverresp: "system_getdatabundlever",
       tower_claimrewardresp: "tower_claimreward",
       fight_starttowerresp: "fight_starttower",

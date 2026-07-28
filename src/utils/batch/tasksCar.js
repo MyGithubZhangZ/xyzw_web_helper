@@ -32,6 +32,8 @@ export function createTasksCar(deps) {
     isBigPrize,
     countRacingRefreshTickets,
     delayConfig,
+    loadSettings,
+    currentSettings,
   } = deps;
 
   const FOUR_HOURS_MS = 4 * 60 * 60 * 1000;
@@ -55,6 +57,20 @@ export function createTasksCar(deps) {
       tokenStatus.value[tokenId] = "running";
 
       const token = tokens.value.find((t) => t.id === tokenId);
+
+      // 加载该Token的独立配置
+      const tokenSettings = loadSettings ? (loadSettings(tokenId) || currentSettings) : currentSettings;
+
+      // 检查是否开启了智能发车
+      if (tokenSettings?.smartSendCarEnable === false) {
+        addLog({
+          time: new Date().toLocaleTimeString(),
+          message: `${token.name} 智能发车功能已关闭，跳过执行`,
+          type: "warning",
+        });
+        tokenStatus.value[tokenId] = "completed";
+        return;
+      }
 
       try {
         addLog({

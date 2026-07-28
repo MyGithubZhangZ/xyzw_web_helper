@@ -83,7 +83,8 @@ class RateLimiter {
   }
 }
 
-const authUserRateLimiter = new RateLimiter(25, 60000);
+// 允许每秒最多9999个请求，等于去除了限制
+const authUserRateLimiter = new RateLimiter(9999, 1000);
 
 export const setAuthUserRateLimiterCallback = (
   callback: WaitCallback,
