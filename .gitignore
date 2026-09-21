@@ -145,3 +145,15 @@ bin/
 server/config.json
 
 src-tauri/
+# Visual Studio 临时文件与缓存
+.vs/
+*.vsidx
+*.wsuo
+*.slnx.sqlite
+VSWorkspaceState.json
+DocumentLayout.json
+
+# 依赖与构建（常见 Web 项目）
+node_modules/
+bin/
+obj/

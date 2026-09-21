@@ -9,6 +9,7 @@ export {}
 declare module 'vue' {
   export interface GlobalComponents {
     ABadge: typeof import('@arco-design/web-vue')['Badge']
+    AboutModal: typeof import('./src/components/Common/AboutModal.vue')['default']
     AButton: typeof import('@arco-design/web-vue')['Button']
     ACard: typeof import('@arco-design/web-vue')['Card']
     ADatePicker: typeof import('@arco-design/web-vue')['DatePicker']

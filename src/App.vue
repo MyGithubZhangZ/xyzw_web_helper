@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <n-config-provider :theme="naiveTheme">
     <n-message-provider>
       <n-loading-bar-provider>
@@ -6,6 +6,7 @@
           <n-dialog-provider>
             <div id="app">
               <router-view />
+              <AboutModal v-model:show="showAboutModal" />
             </div>
           </n-dialog-provider>
         </n-notification-provider>
@@ -18,6 +19,7 @@
 import { darkTheme } from "naive-ui";
 import { computed, onMounted, onUnmounted } from "vue";
 import { useTheme } from "@/composables/useTheme";
+import AboutModal from "@/components/Common/AboutModal.vue";
 
 const { isDark, initTheme, setupSystemThemeListener, updateReactiveState } =
   useTheme();
@@ -37,6 +39,9 @@ const handleThemeChange = () => {
   }, 50);
 };
 
+// 是否显示关于弹窗（bool 参数控制首次打开加载）
+const showAboutModal = ref(false);
+
 onMounted(() => {
   initTheme();
   setupSystemThemeListener();
@@ -46,6 +51,9 @@ onMounted(() => {
 
   // 初始化时更新状态
   updateReactiveState();
+
+  // 首次打开时显示关于弹窗
+  showAboutModal.value = false;
 });
 
 onUnmounted(() => {
