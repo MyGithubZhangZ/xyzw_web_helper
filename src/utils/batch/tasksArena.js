@@ -396,10 +396,11 @@ export function createTasksArena(deps) {
         if (rodCount < remaining) {
           addLog({
             time: new Date().toLocaleTimeString(),
-            message: `${token.name} 普通鱼竿不足 (${rodCount} < ${remaining})，将仅使用现有鱼竿`,
+            message: `${token.name} 普通鱼竿不足 (${rodCount} < ${remaining})，停止当前号的钓鱼补齐`,
             type: "warning",
           });
-          remaining = rodCount;
+          tokenStatus.value[tokenId] = "completed";
+          return;
         }
 
         while (remaining > 0 && !shouldStop.value) {
@@ -420,29 +421,29 @@ export function createTasksArena(deps) {
 
             // 每钓鱼5轮（50次）后，重新获取角色信息，校验鱼竿数量
             if (remaining > 0 && batch >= 10 && remaining % 50 === 0) {
-              try {
-                const roleRes = await tokenStore.sendMessageWithPromise(
-                  tokenId,
-                  "role_getroleinfo",
-                  {},
-                  5000,
-                );
-                const currentRole = roleRes?.role || roleRes?.data?.role;
-                if (currentRole) {
-                  const currentRodCount =
-                    currentRole.items?.[1011]?.quantity || 0;
-                  if (currentRodCount < remaining) {
-                    addLog({
-                      time: new Date().toLocaleTimeString(),
-                      message: `${token.name} 同步后发现鱼竿不足 (${currentRodCount} < ${remaining})，调整目标`,
-                      type: "warning",
-                    });
-                    remaining = currentRodCount;
-                  }
-                }
-              } catch (e) {
-                // ignore
-              }
+                 try {
+                     const roleRes = await tokenStore.sendMessageWithPromise(
+                         tokenId,
+                         "role_getroleinfo",
+                         {},
+                         5000,
+                     );
+                     const currentRole = roleRes?.role || roleRes?.data?.role;
+                     if (currentRole) {
+                         const currentRodCount = currentRole.items?.[1011]?.quantity || 0;
+                         if (currentRodCount < remaining) {
+                             addLog({
+                                 time: new Date().toLocaleTimeString(),
+                                 message: `${token.name} 同步后发现鱼竿不足 (${currentRodCount} < ${remaining})，停止当前号的钓鱼补齐`,
+                                 type: "warning",
+                             });
+                             tokenStatus.value[tokenId] = "completed";
+                             return;
+                         }
+                     }
+                 } catch (e) {
+                     // ignore
+                 }
             }
 
             await new Promise((r) => setTimeout(r, delayConfig.battle));
