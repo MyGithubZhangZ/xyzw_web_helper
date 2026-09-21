@@ -480,6 +480,14 @@
                 >
                   预约直播
                 </n-button>
+                <n-button
+                  size="small"
+                  @click="claimRollupPack"
+                  :disabled="isRunning || selectedTokens.length === 0 || !isMonday"
+                  :title="isMonday ? '' : '只在周一可用'"
+                >
+                  十殿100白玉
+                </n-button>
               </n-space>
             </n-tab-pane>
             <n-tab-pane name="legacy" tab="功法">
@@ -3158,6 +3166,12 @@ const isFreeGachaDay = computed(() => {
   return day === 2 || day === 4 || day === 6;
 });
 
+// 判断是否是周一（十殿100白玉开放日）
+const isMonday = computed(() => {
+  // 1: 周一
+  return new Date().getDay() === 1;
+});
+
 // 排序后的游戏角色Token列表
 const sortedTokens = computed(() => {
   return [...tokenStore.gameTokens].sort((tokenA, tokenB) => {
@@ -3254,14 +3268,14 @@ const getCurrentActivityWeek = computed(() => {
 
 const isWeirdTowerActivityOpen = computed(() => {
   if (getCurrentActivityWeek.value !== "黑市周") return false;
-
-  const now = new Date();
-  const day = now.getDay();
-  const hour = now.getHours();
-  // 如果是周五，必须在12点之后
-  if (day === 5) {
-    return hour >= 12;
-  }
+//临时注释，允许怪异塔最后一天周五也领取道具
+  // const now = new Date();
+  // const day = now.getDay();
+  // const hour = now.getHours();
+  // // 如果是周五，必须在12点之后
+  // if (day === 5) {
+  //   return hour >= 12;
+  // }
   return true;
 });
 
@@ -6208,6 +6222,7 @@ const {
   collection_claimfreereward,
   freeGacha,
   bookLiveStream,
+  claimRollupPack,
 } = tasksStore;
 
 const tasksLegacy = createTasksLegacy(createTaskDeps());

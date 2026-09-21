@@ -393,10 +393,11 @@ export function createTasksArena(deps) {
         if (rodCount < remaining) {
           addLog({
             time: new Date().toLocaleTimeString(),
-            message: `${token.name} 普通鱼竿不足 (${rodCount} < ${remaining})，将仅使用现有鱼竿`,
+            message: `${token.name} 普通鱼竿不足 (${rodCount} < ${remaining})，停止当前号的钓鱼补齐`,
             type: "warning",
           });
-          remaining = rodCount;
+          tokenStatus.value[tokenId] = "completed";
+          return;
         }
 
         while (remaining > 0 && !shouldStop.value) {
@@ -430,10 +431,11 @@ export function createTasksArena(deps) {
                          if (currentRodCount < remaining) {
                              addLog({
                                  time: new Date().toLocaleTimeString(),
-                                 message: `${token.name} 同步后发现鱼竿不足 (${currentRodCount} < ${remaining})，调整目标`,
+                                 message: `${token.name} 同步后发现鱼竿不足 (${currentRodCount} < ${remaining})，停止当前号的钓鱼补齐`,
                                  type: "warning",
                              });
-                             remaining = currentRodCount;
+                             tokenStatus.value[tokenId] = "completed";
+                             return;
                          }
                      }
                  } catch (e) {

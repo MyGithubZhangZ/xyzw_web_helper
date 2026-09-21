@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="default-layout">
     <!-- 顶部导航 -->
     <nav class="dashboard-nav">
@@ -50,6 +50,16 @@
             </n-icon>
             <span>批量日常</span>
           </router-link>
+          <!-- <router-link
+            to="/admin/push-level"
+            class="nav-item"
+            active-class="active"
+          >
+            <n-icon>
+              <Trophy />
+            </n-icon>
+            <span>主线推图（临时注释）</span>
+          </router-link> -->
           <router-link
             to="/admin/PushingLevels"
             class="nav-item"
@@ -70,6 +80,12 @@
             </n-icon>
             <span>消息测试</span>
           </router-link>
+          <div class="nav-item" style="cursor: pointer" @click="openAboutModal">
+            <n-icon>
+              <MusicalNotes />
+            </n-icon>
+            <span>关于旋律</span>
+          </div>
           <router-link to="/admin/legion-war" class="nav-item" active-class="active"  v-if="isNowInLegionWarTime()" >
             <n-icon>
               <LockOpen />
@@ -176,6 +192,12 @@
           </n-icon>
           <span>消息测试</span>
         </router-link>
+        <div class="drawer-item" style="cursor: pointer" @click="openAboutModal">
+          <n-icon>
+            <MusicalNotes />
+          </n-icon>
+          <span>关于旋律</span>
+        </div>
           <router-link to="/admin/legion-war" class="nav-item" active-class="active"  v-if="isNowInLegionWarTime()" >
             <n-icon>
               <LockOpen />
@@ -197,6 +219,7 @@
     <div class="main">
       <router-view />
     </div>
+    <AboutModal v-model:show="showAboutModal" />
   </div>
 </template>
 
@@ -207,6 +230,7 @@ import {
   selectedTokenId,
 } from "@/stores/tokenStore";
 import ThemeToggle from "@/components/Common/ThemeToggle.vue";
+import AboutModal from "@/components/Common/AboutModal.vue";
 import {
   Home,
   PersonCircle,
@@ -218,6 +242,7 @@ import {
   Menu,
   Layers,
   ArrowUpCircle,
+  MusicalNotes,
 } from "@vicons/ionicons5";
 
 import { useRouter } from 'vue-router'
@@ -230,6 +255,13 @@ const router = useRouter();
 const message = useMessage();
 
 const isMobileMenuOpen = ref(false);
+
+// 关于旋律弹窗
+const showAboutModal = ref(false);
+const openAboutModal = () => {
+  isMobileMenuOpen.value = false;
+  showAboutModal.value = true;
+};
 
 const userMenuOptions = [
   {

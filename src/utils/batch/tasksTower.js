@@ -1,4 +1,4 @@
-import { getTowerActId } from "../towerActId.js";
+﻿import { getTowerActId } from "../towerActId.js";
 
 /**
  * 爬塔类任务
@@ -774,7 +774,6 @@ export function createTasksTower(deps) {
 
         await ensureConnection(tokenId);
 
-        var actId=2606261;//先临时写死
         // 获取活动信息
         let res = await tokenStore.sendMessageWithPromise(
           tokenId,
@@ -796,7 +795,7 @@ export function createTasksTower(deps) {
           return;
         }
 
-        //const actId = String(towerData.actId);
+        const actId = String(towerData.actId);
         if (actId.length >= 6) {
            const year = "20" + actId.substring(0, 2);
            const month = actId.substring(2, 4);
