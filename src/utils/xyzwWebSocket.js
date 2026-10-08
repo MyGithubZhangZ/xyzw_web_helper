@@ -360,6 +360,9 @@ export function registerDefaultCommands(reg) {
     .register("warguess_getguesscoinreward")
     .register("legion_payloadsignup") // 蟠桃报名
 
+    //十殿100白玉领取
+    .register("activity_claimrolluppack")
+
     // 珍宝阁相关
     .register("collection_claimfreereward")
     .register("collection_goodslist")
@@ -1235,6 +1238,9 @@ export class XyzwWebSocketClient {
       // 特殊响应映射 - 有些命令有独立响应，有些用同步响应
       task_claimdailyrewardresp: "task_claimdailyreward",
       task_claimweekrewardresp: "task_claimweekreward",
+
+      //十殿100白玉
+      activity_claimrolluppackresp: "activity_claimrolluppack",
 
       // 同步响应映射（优先级低）
 
