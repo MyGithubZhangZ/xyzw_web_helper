@@ -1,108 +1,103 @@
 ﻿<template>
   <!-- 手动输入表单 -->
-  <NForm
-    :model="importForm"
-    label-placement="top"
-    size="large"
-    :show-label="true"
-  >
-    <NFormItem label="游戏角色名称" :show-label="true">
-      <NInput
-        v-model:value="importForm.name"
-        placeholder="例如：主号战士"
-        clearable
-      />
-    </NFormItem>
+  <n-form :model="importForm" :label-placement="'top'" :size="'large'" :show-label="true">
+    <!-- BIN文件管理方式 -->
+    <n-form-item :label="'BIN文件管理方式'" :show-label="true">
+      <div class="mode-selection">
+        <div
+          class="mode-option"
+          :class="{ active: binManageMode === 'stableId' }"
+          @click="binManageMode = 'stableId'"
+        >
+          <div class="mode-title">StableId模式</div>
+          <div class="mode-description">文件名相同则视为同一文件，适合BIN变动但文件名不变的情况。</div>
+        </div>
+        <div
+          class="mode-option"
+          :class="{ active: binManageMode === 'hash' }"
+          @click="binManageMode = 'hash'"
+        >
+          <div class="mode-title">Hash值模式</div>
+          <div class="mode-description">文件内容相同即Hash相同则视为同一文件。</div>
+        </div>
+      </div>
+    </n-form-item>
 
-    <NFormItem label="bin文件" :show-label="true">
-      <a-upload
-        multiple
-        accept="*.bin,*.dmp"
-        @before-upload="uploadBin"
-        draggable
-        dropzone
-        placeholder="粘贴Token字符串..."
-        clearable
-      >
+    <div class="form-actions">
+      <n-button type="primary" size="large" block :loading="isImporting" @click="handleImport">
+        <template #icon>
+          <n-icon>
+            <CloudUpload />
+          </n-icon>
+        </template>
+        添加Token
+      </n-button>
+
+      <n-button v-if="tokenStore.hasTokens" size="large" block @click="cancel">
+        取消
+      </n-button>
+    </div>
+
+    <n-form-item :label="'游戏角色名称'" :show-label="true">
+      <n-input v-model:value="importForm.name" placeholder="例如：主号战士" clearable />
+    </n-form-item>
+
+    <n-form-item :label="'bin文件'" :show-label="true">
+      <a-upload multiple accept="*.bin,*.dmp" @before-upload="uploadBin" draggable dropzone placeholder="粘贴Token字符串..."
+        clearable>
         <!-- <div class="dropzone-content">
           请点击上传或将bind文件拖拽到此处
         </div> -->
       </a-upload>
-    </NFormItem>
+    </n-form-item>
     <a-list>
-      <a-list-item v-for="(role, roleIndex) in roleList" :key="roleIndex">
+      <a-list-item v-for="(role, index) in roleList" :key="index">
         <div>
           <strong>角色名称:</strong> {{ role.name || "未命名角色" }}<br />
           <strong>Token:</strong>
-          <span style="word-break: break-all">{{ role.token }}</span
-          ><br />
+          <span style="word-break: break-all">{{ role.token }}</span><br />
           <strong>服务器:</strong> {{ role.server || "未指定" }}
         </div>
       </a-list-item>
     </a-list>
 
     <!-- 角色详情 -->
-    <NCollapse>
-      <NCollapseItem title="角色详情 (可选)" name="optional">
+    <n-collapse>
+      <n-collapse-item title="角色详情 (可选)" name="optional">
         <div class="optional-fields">
-          <NFormItem label="服务器">
-            <NInput
-              v-model:value="importForm.server"
-              placeholder="服务器名称"
-            />
-          </NFormItem>
+          <n-form-item label="服务器">
+            <n-input v-model:value="importForm.server" placeholder="服务器名称" />
+          </n-form-item>
 
-          <NFormItem label="自定义连接地址">
-            <NInput
-              v-model:value="importForm.wsUrl"
-              placeholder="留空使用默认连接"
-            />
-          </NFormItem>
+          <n-form-item label="自定义连接地址">
+            <n-input v-model:value="importForm.wsUrl" placeholder="留空使用默认连接" />
+          </n-form-item>
         </div>
-      </NCollapseItem>
-    </NCollapse>
+      </n-collapse-item>
+    </n-collapse>
 
-    <div class="form-actions">
-      <NButton
-        type="primary"
-        size="large"
-        block
-        :loading="isImporting"
-        @click="handleImport"
-      >
-        <template #icon>
-          <NIcon>
-            <CloudUpload />
-          </NIcon>
-        </template>
-        添加Token
-      </NButton>
 
-      <NButton v-if="tokenStore.hasTokens" size="large" block @click="cancel">
-        取消
-      </NButton>
-    </div>
-  </NForm>
+  </n-form>
 </template>
 
 <script lang="ts" setup>
+import { ref, reactive } from "vue";
+import { useTokenStore } from "@/stores/tokenStore";
 import { CloudUpload } from "@vicons/ionicons5";
+
 import {
-  NButton,
-  NCollapse,
-  NCollapseItem,
   NForm,
   NFormItem,
-  NIcon,
   NInput,
+  NButton,
+  NIcon,
+  NCollapse,
+  NCollapseItem,
   useMessage,
 } from "naive-ui";
+
 import PQueue from "p-queue";
-
-import { reactive, ref } from "vue";
-
 import useIndexedDB from "@/hooks/useIndexedDB";
-import { useTokenStore } from "@/stores/tokenStore";
 import { getTokenId, transformToken } from "@/utils/token";
 
 const $emit = defineEmits(["cancel", "ok"]);
@@ -117,6 +112,7 @@ const cancel = () => {
 const tokenStore = useTokenStore();
 const message = useMessage();
 const isImporting = ref(false);
+const binManageMode = ref("stableId"); // BIN文件管理方式：stableId-文件名模式，hash-Hash值模式
 const importForm = reactive({
   name: "",
   server: "",
@@ -139,8 +135,12 @@ const tQueue = new PQueue({ concurrency: 1, interval: 1000 });
 const initName = (fileName: string) => {
   if (!fileName) return;
   fileName = fileName.trim();
-  const binRes = fileName.match(/^bin-(.*?)服-([0-2])-(\d{6,12})-(.*)\.bin$/);
-  console.log(binRes);
+  // 匹配格式：bin-{服务器}服-{角色索引}-{角色ID}-{角色名}.bin
+  let binRes = fileName.match(/^bin-(.*?)服-([0-2])-([0-9]{6,12})-(.*)\.bin$/);
+
+  if (binRes) {
+    importForm.name = `${binRes[1]}_${binRes[2]}_${binRes[4]}`;
+    return {
       server: binRes[1],
       roleIndex: binRes[2],
       roleId: binRes[3],
@@ -148,6 +148,8 @@ const initName = (fileName: string) => {
       // StableId 生成：bin-服务器-索引-角色ID
       stableId: `bin-${binRes[1]}-${binRes[2]}-${binRes[3]}`,
     };
+  }
+  return {
     server: "",
     roleIndex: "",
     roleId: "",
@@ -155,6 +157,7 @@ const initName = (fileName: string) => {
     stableId: fileName, // 回退：使用文件名本身
   };
 };
+
 const uploadBin = (binFile: File) => {
   tQueue.add(async () => {
     console.log("上传文件数据:", binFile);
@@ -165,8 +168,12 @@ const uploadBin = (binFile: File) => {
       // 根据管理模式选择不同的ID生成策略
       // StableId模式：使用文件名生成的stableId，相同文件名视为同一角色
       // Hash模式：使用文件内容Hash，内容相同视为同一角色
-      // console.log('转换Token:', userToken);
-      const tokenId = getTokenId(userToken);
+      const tokenId = binManageMode.value === 'stableId'
+        ? roleMeta.stableId
+        : getTokenId(userToken);
+      const roleToken = await transformToken(userToken);
+      const roleName = roleMeta.roleName || binFile.name.split(".")?.[0] || "";
+      // 刷新indexDB数据库token数据
       const saved = await storeArrayBuffer(tokenId, userToken);
       if (!saved) {
         message.error("保存BIN数据到IndexedDB失败");
@@ -175,11 +182,13 @@ const uploadBin = (binFile: File) => {
 
       // 上传列表中发现已存在的重复名称，提示消息
       if (roleList.value.some((role) => role.id === tokenId)) {
-      
+        message.error("上传列表中已存在同名角色! ");
         return;
       }
       // 检查待上传的角色是否已在tokenStore中存在
-      const existingToken = tokenStore.gameTokens.find((t) => t.id === tokenId);
+      const existingToken = tokenStore.gameTokens.find(
+        (t) => t.id === tokenId,
+      );
       if (existingToken) {
         message.warning(`角色"${roleName}"已存在，将更新该角色的Token`);
       }
@@ -188,7 +197,7 @@ const uploadBin = (binFile: File) => {
         id: tokenId,
         token: roleToken,
         name: roleName,
-        server: `${roleMeta.server}${roleMeta.roleIndex}` || "",
+        server: roleMeta.server + "" + roleMeta.roleIndex || "",
         wsUrl: importForm.wsUrl || "",
         importMethod: "bin",
       });
@@ -210,6 +219,15 @@ const handleImport = async () => {
     // StableId模式下：记录旧token的分组关联，用于后续恢复
     let oldTokenGroups: string[] = [];
     if (binManageMode.value === 'stableId') {
+      const oldToken = tokenStore.gameTokens.find((t) => t.id === role.id);
+      if (oldToken) {
+        oldTokenGroups = tokenStore.getTokenGroups(role.id).map(g => g.id);
+      }
+    }
+
+    // tokenStore.gameTokens中发现已存在的重复名称，则移出token后重新添加
+    const gameToken = tokenStore.gameTokens.find((t) => t.id === role.id);
+    if (gameToken) {
       console.log("移除同名token:", gameToken);
       // tokenStore.removeToken(gameToken.id);
       tokenStore.updateToken(gameToken.id, {
@@ -223,6 +241,13 @@ const handleImport = async () => {
 
     // StableId模式下：重新关联到原分组
     if (binManageMode.value === 'stableId' && oldTokenGroups.length > 0) {
+      oldTokenGroups.forEach(groupId => {
+        tokenStore.addTokenToGroup(groupId, role.id);
+      });
+    }
+  });
+  console.log("当前Token列表:", tokenStore.gameTokens);
+  message.success("Token添加成功");
   roleList.value = [];
   $emit("ok");
 };
@@ -259,8 +284,74 @@ const handleImport = async () => {
 
 /* BIN文件管理方式样式 */
 .mode-selection {
-{
-  "name": "/TokenImport/singlebin",
-  "path": "/TokenImport/singlebin"
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 80%;
 }
-</route>
+
+.mode-option {
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background: #fff;
+
+  &:hover {
+    border-color: #667eea;
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.15);
+  }
+
+  &.active {
+    border-color: #667eea;
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+    box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
+
+    .mode-description {
+      color: #667eea;
+    }
+  }
+}
+
+.mode-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1d2129;
+}
+
+.mode-description {
+  font-size: 13px;
+  color: #86909c;
+  line-height: 1.5;
+  margin-top: 4px;
+}
+
+/* 深色主题适配 */
+[data-theme="dark"] .mode-option {
+  border-color: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.05);
+
+  &:hover {
+    border-color: #667eea;
+  }
+
+  &.active {
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.2) 0%, rgba(118, 75, 162, 0.2) 100%);
+  }
+}
+
+[data-theme="dark"] .mode-title {
+  color: #ffffff;
+}
+
+[data-theme="dark"] .mode-description {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+[data-theme="dark"] .mode-option.active .mode-description {
+  color: #a5b4fc;
+}
+</style>
